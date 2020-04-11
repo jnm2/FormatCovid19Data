@@ -23,7 +23,7 @@ namespace FormatCovid19Data
             {
                 if (a.Date != b.Date) throw new NotImplementedException();
 
-                Console.WriteLine($"{a.Date:d},{a.World},{a.Country},{b.State},{b.County}");
+                Console.WriteLine($"{a.Date:d}\t{a.World}\t{a.Country}\t{b.State}\t{b.County}");
             }
         }
 
