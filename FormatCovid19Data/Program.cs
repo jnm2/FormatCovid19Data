@@ -27,7 +27,7 @@ namespace FormatCovid19Data
             }
         }
 
-        private static async Task<ImmutableArray<(DateTime Date, int World, int Country)>> GetWorldAndCountryCountsAsync(HttpClient client, string countryName)
+        private static async Task<ImmutableArray<(DateTime Date, int World, int? Country)>> GetWorldAndCountryCountsAsync(HttpClient client, string countryName)
         {
             await using var stream = await client.GetStreamAsync("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv");
             using var reader = new CsvReader(new StreamReader(stream));
@@ -44,7 +44,7 @@ namespace FormatCovid19Data
                 columnHeaders.Add(DateTime.ParseExact(reader.FieldValue, "M/d/yy", CultureInfo.InvariantCulture));
             }
 
-            var countsByDate = columnHeaders.Select(date => (Date: date, World: 0, Country: 0)).ToArray();
+            var countsByDate = columnHeaders.Select(date => (Date: date, World: 0, Country: (int?)null)).ToArray();
 
             while (await reader.NextLineAsync())
             {
@@ -56,10 +56,14 @@ namespace FormatCovid19Data
 
                 for (var index = 0; await reader.ReadFieldAsync(); index++)
                 {
-                    var count = int.Parse(reader.FieldValue, NumberStyles.None, CultureInfo.InvariantCulture);
+                    var count = int.Parse(reader.FieldValue, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+                    if (count < -1) throw new NotImplementedException("Negative count other than -1");
 
-                    countsByDate[index].World += count;
-                    if (isCountry) countsByDate[index].Country = count;
+                    if (count != -1)
+                    {
+                        countsByDate[index].World += count;
+                        if (isCountry) countsByDate[index].Country = count;
+                    }
                 }
             }
 
